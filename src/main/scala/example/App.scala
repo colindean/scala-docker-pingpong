@@ -28,19 +28,26 @@ object App {
 
         Await.ready(c.connectToSocket(), 5.seconds)
 
-        c.write("ping")
-        c.readLine match {
+        c.socket.write("ping")
+        val text = c.socket.readLine match {
           case Success(line) => s"client got: $line"
           case Failure(ex) => s"client failed: ${ex.toString}"
         }
+        println(text)
       case ServerCommand =>
         val s = new Server(port = options.port)
-        s.createListenSocket()
-        s.acceptConnection()
-        println(s"server got: ${s.readLine}")
-        println("simulating work…")
-        Thread.sleep(2000)
-        s.write("pong")
+        import RichSocket._
+        s.forEachConnection { socket =>
+          println(s"Client connected: ${socket.toString}")
+          val text = socket.readLine match {
+            case Success(line) => s"server got: $line"
+            case Failure(ex) => s"server failed: ${ex.toString}"
+          }
+          println("simulating work…")
+          Thread.sleep(2000)
+          socket.write("pong")
+          socket.close()
+        }
       case HelpCommand =>
         println("help text would be here, dummy")
       case UnknownCommand =>

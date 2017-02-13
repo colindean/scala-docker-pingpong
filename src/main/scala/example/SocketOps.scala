@@ -1,14 +1,14 @@
 package example
 
 import java.io.{BufferedReader, InputStreamReader, PrintWriter}
-import java.net.{ServerSocket, Socket}
+import java.net.Socket
 
 import scala.concurrent.{Future, blocking}
+import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 trait SocketOps {
-  var socket: Option[Socket] = None
-  val port: Int
+  val socket: Option[Socket] = None
   def readLine: Try[String] = {
     if(socket.isEmpty) return Failure(new RuntimeException("socket not created"))
     if(socket.get.isConnected) {
@@ -30,13 +30,20 @@ trait SocketOps {
   }
 }
 
+class RichSocket(override val socket: Option[Socket]) extends SocketOps
+object RichSocket {
+  implicit def enrichSocket(socket: Socket): RichSocket = new RichSocket(Option(socket))
+}
+
 import example.Client._
+
 import scala.concurrent.ExecutionContext.Implicits.global
-class Client(var host: String = LOCALHOST, val port: Int) extends SocketOps {
+class Client(var host: String = LOCALHOST, val port: Int) {
+  var socket: RichSocket = _
   def connectToSocket(): Future[Unit] = {
     Future {
       Try( new Socket(host, port)) match {
-        case Success(s) => socket = Option(s)
+        case Success(s) => socket = s
         case Failure(ex) => println(s"failed to open client socket: ${ex.toString}")
       }
     }
