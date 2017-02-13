@@ -1,8 +1,15 @@
-This is a an [activator](https://typesafe.com/activator) template for removing
-the boilerplate in setting up a new scala project:
+This is just me playing with Docker and using Scala to do it.
 
-* sbt 0.13.5
-* Cross build against Scala 2.10.4, 2.11.2
-* [ScalaTest](http://www.scalatest.org/)
-* [ScalaCheck](http://www.scalacheck.org/)
-* Everything in your project's base package imported automatically in repl sessions
+Build the app and the image:
+
+    sbt assembly && docker build --tag whatever .
+
+Start the server:
+
+    docker run --publish-all=true --expose 4567 --hostname whatever-server whatever server 4567
+
+Start the client after putting the listening port into `port`:
+
+    docker run whatever client ${port} 172.17.0.1
+
+If you use anything in here, you're probably foolish.
